@@ -71,6 +71,34 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
+func createEvent(srv calendar.Service) {
+	event := &calendar.Event{
+		Summary:     "Google I/O 2015",
+		Location:    "800 Howard St., San Francisco, CA 94103",
+		Description: "A chance to hear more about Google's developer products.",
+		Start: &calendar.EventDateTime{
+			DateTime: "2022-06-28T09:00:00-07:00",
+			TimeZone: "Europe/Zurich",
+		},
+		End: &calendar.EventDateTime{
+			DateTime: "2022-06-28T09:00:00-08:00",
+			TimeZone: "Europe/Zurich",
+		},
+		Recurrence: []string{"RRULE:FREQ=DAILY;COUNT=2"},
+		Attendees: []*calendar.EventAttendee{
+			{Email: "joel.rose@code.berlin"},
+			{Email: "mail@joel-rose.de"},
+		},
+	}
+
+	calendarId := "primary"
+	event, err := srv.Events.Insert(calendarId, event).Do()
+	if err != nil {
+		log.Fatalf("Unable to create event. %v\n", err)
+	}
+	fmt.Printf("Event created: %s\n", event.HtmlLink)
+}
+
 func main() {
 	ctx := context.Background()
 	b, err := ioutil.ReadFile("credentials.json")
@@ -79,7 +107,7 @@ func main() {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
+	config, err := google.ConfigFromJSON(b, calendar.CalendarScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -108,4 +136,6 @@ func main() {
 			fmt.Printf("%v (%v)\n", item.Summary, date)
 		}
 	}
+
+	createEvent(*srv)
 }
